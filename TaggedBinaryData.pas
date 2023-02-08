@@ -63,11 +63,11 @@
 
       All metadata (signature, context ID) are written with little endianess.
 
-  Version 1.0 (2010-11-01)
+  Version 1.0.1 (2022-10-26)
 
-  Last change 2010-11-01
+  Last change 2023-01-26
 
-  ©2021 František Milt
+  ©2022-2023 František Milt
 
   Contacts:
     František Milt: frantisek.milt@gmail.com
@@ -86,6 +86,7 @@
   Dependencies:
     AuxTypes        - github.com/TheLazyTomcat/Lib.AuxTypes
     AuxClasses      - github.com/TheLazyTomcat/Lib.AuxClasses
+    BinaryStreaming - github.com/TheLazyTomcat/Lib.BinaryStreaming
     StrRect         - github.com/TheLazyTomcat/Lib.StrRect
     BinaryStreaming - github.com/TheLazyTomcat/Lib.BinaryStreaming
 
@@ -217,12 +218,11 @@ type
 ===============================================================================}
 type
   TTaggedBinaryDataWriter = class(TStream)
-  private
+  protected
     fDestination:     TStream;
     fActions:         TTBDWriterActions;
     fCurrentContext:  TTBDContextID;
     fCurrentTag:      TTBDTag;
-  protected
     procedure Initialize(Destination: TStream); virtual;
     procedure Finalize; virtual;
     procedure WriteSignature; virtual;
@@ -312,7 +312,7 @@ type
 ===============================================================================}
 type
   TTaggedBinaryDataReader = class(TStream)
-  private
+  protected
     fSource:                TStream;
     fEndOfDataReached:      Boolean;
     fCurrentContext:        TTBDContextID;
@@ -322,7 +322,6 @@ type
     fContextChangeCallback: TNotifyCallback;
     fTagChangeEvent:        TNotifyEvent;
     fTagChangeCallback:     TNotifyCallback;
-  protected
     procedure Initialize(Source: TStream); virtual;
     procedure Finalize; virtual;
     procedure DoContextChange; virtual;
@@ -386,7 +385,8 @@ end;
 
 procedure TTaggedBinaryDataWriter.Finalize;
 begin
-WriteClose;
+If Assigned(fDestination) then
+  WriteClose;
 fActions := [];
 fDestination := nil;
 end;
@@ -558,8 +558,8 @@ end;
 procedure TTaggedBinaryDataReader.DoContextChange;
 begin
 If Assigned(fContextChangeEvent) then
-  fContextChangeEvent(Self);
-If Assigned(fContextChangeCallback) then
+  fContextChangeEvent(Self)
+else If Assigned(fContextChangeCallback) then
   fContextChangeCallback(Self);
 fIsDefaultContext := False;
 end;
@@ -569,8 +569,8 @@ end;
 procedure TTaggedBinaryDataReader.DoTagChange;
 begin
 If Assigned(fTagChangeEvent) then
-  fTagChangeEvent(Self);
-If Assigned(fTagChangeCallback) then
+  fTagChangeEvent(Self)
+else If Assigned(fTagChangeCallback) then
   fTagChangeCallback(Self);
 end;
 
